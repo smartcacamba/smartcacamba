@@ -1,724 +1,161 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SmartCaçamba</title>
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: system-ui, -apple-system, sans-serif; background: #f1f5f9; }
-    input, select, textarea, button { font-family: inherit; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SmartCaçamba - Painel Operacional</title>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root { --p: #1e40af; --s: #16a34a; --d: #dc2626; --w: #d97706; --bg: #f1f5f9; --txt: #1e293b; }
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+        body { font-family: -apple-system, system-ui, sans-serif; background: var(--bg); color: var(--txt); line-height: 1.5; }
+        .btn { border: none; border-radius: 12px; padding: 14px 20px; font-weight: 700; cursor: pointer; transition: 0.2s; font-size: 15px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-p { background: var(--p); color: #fff; }
+        .btn-s { background: var(--s); color: #fff; }
+        .btn-ghost { background: #e2e8f0; color: #475569; }
+        .input { width: 100%; padding: 14px; border-radius: 10px; border: 1.5px solid #cbd5e1; font-size: 16px; margin-bottom: 15px; outline: none; transition: 0.2s; }
+        .input:focus { border-color: var(--p); box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1); }
+        .card { background: #fff; border-radius: 16px; padding: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); margin-bottom: 20px; border: 1px solid #e2e8f0; }
+        .badge { padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 700; text-transform: uppercase; }
+        .nav-bottom { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; border-top: 1px solid #e2e8f0; display: flex; padding: 10px; z-index: 100; }
+        .nav-item { flex: 1; text-align: center; border: none; background: none; font-size: 11px; font-weight: 600; color: #64748b; cursor: pointer; display: flex; flexDirection: column; align-items: center; gap: 4px; }
+        .nav-item.active { color: var(--p); }
+        .loading-overlay { position: fixed; inset: 0; background: rgba(255,255,255,0.8); display: flex; align-items: center; justify-content: center; z-index: 1000; font-weight: 800; color: var(--p); }
+    </style>
 </head>
 <body>
 <div id="root"></div>
+
 <script type="text/babel">
+    const { useState, useEffect } = React;
 
-// =============================================
-// ⚙️ CONFIGURAÇÃO — COLE SUAS CHAVES AQUI
-// =============================================
-const SUPABASE_URL = 'https://uujafshajbzkhdinqpvv.supabase.co/rest/v1/';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV1amFmc2hhamJ6a2hkaW5xcHZ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQyMDc3OTksImV4cCI6MjA5OTc4Mzc5OX0.lQTcu_OmU_SWIRClaX0iIa6TS3Yi8ONqf2fQj0BaJQI';
-const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    // 🔗 CONFIGURAÇÃO SUPABASE
+    const SUPABASE_URL = 'https://uujafshajbzkhdinqpvv.supabase.co/rest/v1/'; 
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV1amFmc2hhamJ6a2hkaW5xcHZ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQyMDc3OTksImV4cCI6MjA5OTc4Mzc5OX0.lQTcu_OmU_SWIRClaX0iIa6TS3Yi8ONqf2fQj0BaJQI
+';
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// =============================================
-// 🎨 CORES
-// =============================================
-const C = {
-  primary: '#1e40af', light: '#3b82f6', success: '#16a34a',
-  warning: '#d97706', danger: '#dc2626', gray: '#6b7280',
-  bg: '#f1f5f9', white: '#ffffff',
-};
+    // ==========================================
+    // 🔐 COMPONENTE DE LOGIN
+    // ==========================================
+    function LoginView({ onLogin }) {
+        const [email, setEmail] = useState('');
+        const [pass, setPass] = useState('');
+        const [loading, setLoading] = useState(false);
 
-// =============================================
-// 🔧 UTILITÁRIOS
-// =============================================
-const genVoucherCode = () => 'SC-' + Math.random().toString(36).substring(2, 12).toUpperCase();
-const now = () => new Date().toISOString();
-const fmtDate = (d) => d ? new Date(d).toLocaleString('pt-BR') : '-';
+        const handleLogin = async () => {
+            setLoading(true);
+            const { data, error } = await supabase.auth.signInWithPassword({ email, password: pass });
+            if (error) alert("Erro: " + error.message);
+            else onLogin(data.user);
+            setLoading(false);
+        };
 
-// =============================================
-// 🧩 COMPONENTES BASE
-// =============================================
-const { useState, useEffect } = React;
-
-function Toast({ msg }) {
-  if (!msg) return null;
-  return (
-    <div style={{ position:'fixed', top:20, right:20, background: msg.startsWith('❌') ? C.danger : C.success,
-      color:'#fff', padding:'12px 24px', borderRadius:10, fontWeight:600, zIndex:9999, boxShadow:'0 4px 16px #0003' }}>
-      {msg}
-    </div>
-  );
-}
-
-function Badge({ status }) {
-  const map = {
-    completed: ['Concluído', C.success],
-    awaiting:  ['Aguardando', C.warning],
-    rejected:  ['Recusado', C.danger],
-    in_transit:['Em Trânsito', C.light],
-  };
-  const [label, color] = map[status] || [status, C.gray];
-  return (
-    <span style={{ background: color+'22', color, padding:'2px 10px', borderRadius:20, fontSize:12, fontWeight:600 }}>
-      {label}
-    </span>
-  );
-}
-
-function Btn({ children, onClick, color = C.primary, disabled, full, sm }) {
-  return (
-    <button onClick={onClick} disabled={disabled}
-      style={{ background: disabled ? '#e5e7eb' : color, color: disabled ? C.gray : '#fff',
-        border:'none', borderRadius:10, padding: sm ? '8px 14px' : '13px 20px',
-        fontWeight:700, cursor: disabled ? 'not-allowed' : 'pointer',
-        fontSize: sm ? 13 : 15, width: full ? '100%' : 'auto' }}>
-      {children}
-    </button>
-  );
-}
-
-function Field({ label, children }) {
-  return (
-    <div style={{ marginBottom:14 }}>
-      <label style={{ fontSize:13, fontWeight:600, color:'#374151', display:'block', marginBottom:6 }}>{label}</label>
-      {children}
-    </div>
-  );
-}
-
-const inputStyle = { width:'100%', padding:'12px 14px', borderRadius:10, border:'1.5px solid #cbd5e1', fontSize:15, boxSizing:'border-box' };
-
-// =============================================
-// 🔐 LOGIN
-// =============================================
-function Login({ onLogin }) {
-  const [email, setEmail] = useState('');
-  const [pass, setPass] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [err, setErr] = useState('');
-
-  const handleLogin = async () => {
-    setLoading(true); setErr('');
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password: pass });
-    if (error) { setErr('Email ou senha inválidos.'); setLoading(false); return; }
-    onLogin(data.user);
-  };
-
-  return (
-    <div style={{ minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', background: C.bg }}>
-      <div style={{ background: C.white, borderRadius:16, padding:40, width:'100%', maxWidth:400, boxShadow:'0 4px 24px #0002' }}>
-        <div style={{ textAlign:'center', marginBottom:32 }}>
-          <div style={{ fontSize:48 }}>🚛</div>
-          <h1 style={{ fontSize:26, fontWeight:800, color: C.primary, marginTop:8 }}>SmartCaçamba</h1>
-          <p style={{ color: C.gray, fontSize:14, marginTop:4 }}>Gestão inteligente de resíduos</p>
-        </div>
-        <Field label="Email">
-          <input style={inputStyle} type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="seu@email.com" />
-        </Field>
-        <Field label="Senha">
-          <input style={inputStyle} type="password" value={pass} onChange={e => setPass(e.target.value)} placeholder="••••••••" onKeyDown={e => e.key === 'Enter' && handleLogin()} />
-        </Field>
-        {err && <div style={{ color: C.danger, fontSize:13, marginBottom:12 }}>{err}</div>}
-        <Btn full onClick={handleLogin} disabled={loading}>{loading ? 'Entrando...' : 'Entrar'}</Btn>
-      </div>
-    </div>
-  );
-}
-
-// =============================================
-// 📊 DASHBOARD ADMIN
-// =============================================
-function AdminDashboard() {
-  const [companies, setCompanies] = useState([]);
-  const [vouchers, setVouchers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [showForm, setShowForm] = useState(false);
-  const [newCo, setNewCo] = useState({ name:'', cnpj:'' });
-  const [addCr, setAddCr] = useState({});
-  const [showAddId, setShowAddId] = useState(null);
-  const [toast, setToast] = useState('');
-
-  const showToast = (m) => { setToast(m); setTimeout(() => setToast(''), 3000); };
-
-  const load = async () => {
-    const [{ data: cos }, { data: vos }] = await Promise.all([
-      supabase.from('companies').select('*').order('name'),
-      supabase.from('vouchers').select('*').order('departure_time', { ascending: false }).limit(50),
-    ]);
-    setCompanies(cos || []);
-    setVouchers(vos || []);
-    setLoading(false);
-  };
-
-  useEffect(() => { load(); }, []);
-
-  const handleNewCompany = async () => {
-    if (!newCo.name || !newCo.cnpj) return;
-    const { error } = await supabase.from('companies').insert({ name: newCo.name, cnpj: newCo.cnpj });
-    if (error) { showToast('❌ Erro ao cadastrar empresa.'); return; }
-    showToast('✅ Empresa cadastrada!');
-    setNewCo({ name:'', cnpj:'' }); setShowForm(false); load();
-  };
-
-  const handleAddCredits = async (id) => {
-    const qty = parseInt(addCr[id] || 0);
-    if (!qty || qty <= 0) return;
-    const co = companies.find(c => c.id === id);
-    const { error } = await supabase.from('companies').update({ credit_balance: co.credit_balance + qty }).eq('id', id);
-    if (!error) await supabase.from('credit_logs').insert({ company_id: id, amount: qty, description: 'Recarga manual pelo admin' });
-    showToast(error ? '❌ Erro ao adicionar créditos.' : `✅ ${qty} crédito(s) adicionado(s)!`);
-    setAddCr(a => ({ ...a, [id]: '' })); setShowAddId(null); load();
-  };
-
-  const total = vouchers.length;
-  const concluded = vouchers.filter(v => v.status === 'completed').length;
-  const awaiting = vouchers.filter(v => v.status === 'awaiting').length;
-  const rejected = vouchers.filter(v => v.status === 'rejected').length;
-
-  if (loading) return <div style={{ padding:40, textAlign:'center', color: C.gray }}>Carregando...</div>;
-
-  return (
-    <div>
-      <Toast msg={toast} />
-      <div style={{ display:'flex', gap:12, flexWrap:'wrap', marginBottom:24 }}>
-        {[['🚛', 'Total Vales', total, C.primary], ['✅', 'Concluídos', concluded, C.success],
-          ['⏳', 'Aguardando', awaiting, C.warning], ['❌', 'Recusados', rejected, C.danger]].map(([ic, lb, vl, cl]) => (
-          <div key={lb} style={{ background: C.white, borderRadius:12, padding:'16px 20px', flex:1, minWidth:130,
-            boxShadow:'0 1px 4px #0001', display:'flex', alignItems:'center', gap:12 }}>
-            <div style={{ background: cl+'18', borderRadius:10, width:44, height:44, display:'flex', alignItems:'center', justifyContent:'center', fontSize:22 }}>{ic}</div>
-            <div>
-              <div style={{ fontSize:24, fontWeight:800, color: cl }}>{vl}</div>
-              <div style={{ fontSize:12, color: C.gray }}>{lb}</div>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:16 }}>
-        <h3 style={{ fontWeight:700, color:'#1e293b' }}>Empresas Clientes</h3>
-        <Btn sm onClick={() => setShowForm(true)}>+ Nova Empresa</Btn>
-      </div>
-
-      {showForm && (
-        <div style={{ background:'#eff6ff', border:'1px solid #bfdbfe', borderRadius:12, padding:20, marginBottom:16 }}>
-          <div style={{ display:'flex', gap:10, flexWrap:'wrap' }}>
-            <input style={{ ...inputStyle, flex:2 }} placeholder="Razão Social" value={newCo.name} onChange={e => setNewCo(n => ({ ...n, name: e.target.value }))} />
-            <input style={{ ...inputStyle, flex:1 }} placeholder="CNPJ" value={newCo.cnpj} onChange={e => setNewCo(n => ({ ...n, cnpj: e.target.value }))} />
-            <Btn onClick={handleNewCompany} color={C.success}>Salvar</Btn>
-            <Btn onClick={() => setShowForm(false)} color={C.gray}>Cancelar</Btn>
-          </div>
-        </div>
-      )}
-
-      <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
-        {companies.map(co => (
-          <div key={co.id} style={{ background: C.white, borderRadius:12, padding:20, boxShadow:'0 1px 4px #0001',
-            border: co.credit_balance === 0 ? '1.5px solid #fca5a5' : '1px solid #e5e7eb' }}>
-            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', flexWrap:'wrap', gap:10 }}>
-              <div>
-                <div style={{ fontWeight:700, fontSize:15, color:'#1e293b' }}>{co.name}</div>
-                <div style={{ fontSize:12, color: C.gray }}>{co.cnpj}</div>
-              </div>
-              <div style={{ display:'flex', alignItems:'center', gap:12 }}>
-                <div style={{ textAlign:'center' }}>
-                  <div style={{ fontSize:26, fontWeight:800, color: co.credit_balance === 0 ? C.danger : co.credit_balance <= 5 ? C.warning : C.success }}>{co.credit_balance}</div>
-                  <div style={{ fontSize:11, color: C.gray }}>créditos</div>
+        return (
+            <div style={{ padding: 40, minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                <div style={{ textAlign: 'center', marginBottom: 40 }}>
+                    <h1 style={{ fontSize: 32, fontWeight: 900, color: var(--p) }}>SmartCaçamba</h1>
+                    <p style={{ color: '#64748b' }}>Gestão Inteligente de Resíduos</p>
                 </div>
-                <Btn sm onClick={() => setShowAddId(showAddId === co.id ? null : co.id)}>+ Créditos</Btn>
-              </div>
+                <input className="input" type="email" placeholder="E-mail" value={email} onChange={e=>setEmail(e.target.value)} />
+                <input className="input" type="password" placeholder="Senha" value={pass} onChange={e=>setPass(e.target.value)} />
+                <button className="btn btn-p" onClick={handleLogin} disabled={loading}>
+                    {loading ? 'Entrando...' : 'Entrar na Plataforma'}
+                </button>
             </div>
-            {showAddId === co.id && (
-              <div style={{ marginTop:14, display:'flex', gap:10, alignItems:'center', background:'#f8fafc', borderRadius:8, padding:12 }}>
-                <input type="number" min="1" value={addCr[co.id] || ''} onChange={e => setAddCr(a => ({ ...a, [co.id]: e.target.value }))}
-                  style={{ width:80, padding:'8px 12px', borderRadius:8, border:'1px solid #cbd5e1', fontSize:14, textAlign:'center' }} />
-                <Btn sm onClick={() => handleAddCredits(co.id)} color={C.success}>Confirmar</Btn>
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// =============================================
-// 🚛 REGISTRAR SAÍDA (OBRA)
-// =============================================
-function RegisterDeparture({ companyId }) {
-  const [step, setStep] = useState(0);
-  const [credits, setCredits] = useState(null);
-  const [form, setForm] = useState({ plate:'', driver:'', residue:'Entulho Misto', volume:'10', disposal:'', notes:'' });
-  const [photo, setPhoto] = useState(null);
-  const [photoPreview, setPhotoPreview] = useState(null);
-  const [generated, setGenerated] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [toast, setToast] = useState('');
-
-  const showToast = (m) => { setToast(m); setTimeout(() => setToast(''), 3000); };
-
-  useEffect(() => {
-    supabase.from('companies').select('credit_balance').eq('id', companyId).single()
-      .then(({ data }) => setCredits(data?.credit_balance ?? 0));
-  }, []);
-
-  const handlePhoto = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    setPhoto(file);
-    setPhotoPreview(URL.createObjectURL(file));
-  };
-
-  const handleGenerate = async () => {
-    setLoading(true);
-    let photoUrl = null;
-    if (photo) {
-      const path = `departures/${Date.now()}_${photo.name}`;
-      const { data } = await supabase.storage.from('photos').upload(path, photo);
-      if (data) photoUrl = supabase.storage.from('photos').getPublicUrl(path).data.publicUrl;
-    }
-    const code = genVoucherCode();
-    const { error } = await supabase.from('vouchers').insert({
-      id: code, company_id: companyId, plate: form.plate, driver_name: form.driver,
-      residue_type: form.residue, volume_declared: parseFloat(form.volume),
-      disposal_site: form.disposal, status: 'awaiting',
-      photo_departure_url: photoUrl, departure_time: now(),
-    });
-    if (error) { showToast('❌ Erro ao gerar vale.'); setLoading(false); return; }
-    setGenerated(code);
-    setStep(3);
-    setLoading(false);
-  };
-
-  if (credits === null) return <div style={{ padding:40, textAlign:'center', color: C.gray }}>Verificando saldo...</div>;
-
-  if (credits === 0) return (
-    <div style={{ background:'#fee2e2', border:'1.5px solid #fca5a5', borderRadius:12, padding:32, textAlign:'center' }}>
-      <div style={{ fontSize:40 }}>🚫</div>
-      <div style={{ fontWeight:700, color: C.danger, fontSize:18, marginTop:8 }}>Saída Bloqueada</div>
-      <div style={{ color: C.gray, marginTop:6 }}>Sem créditos disponíveis. Contate o administrador do SmartCaçamba.</div>
-    </div>
-  );
-
-  const steps = ['Veículo', 'Foto & Carga', 'Destino', 'Vale Gerado'];
-
-  return (
-    <div>
-      <Toast msg={toast} />
-      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:20 }}>
-        <h2 style={{ fontSize:20, fontWeight:700, color: C.primary }}>Registrar Saída</h2>
-        <div style={{ background:'#dcfce7', color: C.success, padding:'6px 14px', borderRadius:20, fontWeight:700, fontSize:14 }}>💳 {credits} créditos</div>
-      </div>
-
-      <div style={{ display:'flex', gap:6, marginBottom:24 }}>
-        {steps.map((s, i) => (
-          <div key={i} style={{ flex:1, textAlign:'center' }}>
-            <div style={{ width:28, height:28, borderRadius:'50%', background: step >= i ? C.primary : '#e5e7eb',
-              color: step >= i ? '#fff' : C.gray, display:'flex', alignItems:'center', justifyContent:'center',
-              margin:'0 auto 4px', fontWeight:700, fontSize:13 }}>{i+1}</div>
-            <div style={{ fontSize:10, color: step >= i ? C.primary : C.gray, fontWeight: step >= i ? 600 : 400 }}>{s}</div>
-          </div>
-        ))}
-      </div>
-
-      {step === 0 && (
-        <div>
-          <Field label="🚛 Placa do Veículo *">
-            <input style={{ ...inputStyle, fontWeight:700, letterSpacing:2, fontSize:18 }} value={form.plate}
-              onChange={e => setForm(f => ({ ...f, plate: e.target.value.toUpperCase() }))} placeholder="ABC-1234" />
-          </Field>
-          <Field label="👤 Nome do Motorista *">
-            <input style={inputStyle} value={form.driver} onChange={e => setForm(f => ({ ...f, driver: e.target.value }))} placeholder="Nome completo" />
-          </Field>
-          <Btn full onClick={() => { if (form.plate && form.driver) setStep(1); }} disabled={!form.plate || !form.driver}>Próximo →</Btn>
-        </div>
-      )}
-
-      {step === 1 && (
-        <div>
-          <Field label="📷 Foto da Caçamba *">
-            <label style={{ display:'block', background: photoPreview ? '#dcfce7' : '#eff6ff',
-              border: photoPreview ? '2px solid #16a34a' : '2px dashed #93c5fd',
-              borderRadius:12, padding:24, textAlign:'center', cursor:'pointer' }}>
-              {photoPreview
-                ? <img src={photoPreview} alt="preview" style={{ maxHeight:160, borderRadius:8, maxWidth:'100%' }} />
-                : <><div style={{ fontSize:40 }}>📷</div><div style={{ color: C.primary, fontWeight:600, marginTop:8 }}>Toque para tirar foto</div></>}
-              <input type="file" accept="image/*" capture="environment" onChange={handlePhoto} style={{ display:'none' }} />
-            </label>
-          </Field>
-          <Field label="🗑️ Tipo de Resíduo">
-            <select style={inputStyle} value={form.residue} onChange={e => setForm(f => ({ ...f, residue: e.target.value }))}>
-              {['Entulho Misto','Terra / Solo','Concreto','Madeira','Gesso','Metal','Plástico','Resíduo Perigoso'].map(r => <option key={r}>{r}</option>)}
-            </select>
-          </Field>
-          <Field label="📦 Volume Estimado (m³)">
-            <select style={inputStyle} value={form.volume} onChange={e => setForm(f => ({ ...f, volume: e.target.value }))}>
-              <option value="5">5 m³ — Caçamba Pequena</option>
-              <option value="10">10 m³ — Padrão</option>
-              <option value="15">15 m³ — Grande</option>
-              <option value="20">20 m³ — Caminhão Truck</option>
-            </select>
-          </Field>
-          <div style={{ display:'flex', gap:10 }}>
-            <Btn onClick={() => setStep(0)} color={C.gray}>← Voltar</Btn>
-            <Btn full onClick={() => { if (photo) setStep(2); }} disabled={!photo}>Próximo →</Btn>
-          </div>
-        </div>
-      )}
-
-      {step === 2 && (
-        <div>
-          <Field label="🏭 Destino Final *">
-            <input style={inputStyle} value={form.disposal} onChange={e => setForm(f => ({ ...f, disposal: e.target.value }))} placeholder="Nome do aterro / bota-fora" />
-          </Field>
-          <Field label="📝 Observações">
-            <textarea style={{ ...inputStyle, resize:'none' }} rows={3} value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} placeholder="Informações adicionais (opcional)" />
-          </Field>
-          <div style={{ background:'#fffbeb', border:'1px solid #fde68a', borderRadius:10, padding:14, fontSize:13, color:'#92400e', marginBottom:16 }}>
-            ⚠️ Ao gerar o vale, <strong>1 crédito</strong> será reservado e debitado após confirmação no destino.
-          </div>
-          <div style={{ display:'flex', gap:10 }}>
-            <Btn onClick={() => setStep(1)} color={C.gray}>← Voltar</Btn>
-            <Btn full onClick={handleGenerate} disabled={!form.disposal || loading} color={C.success}>
-              {loading ? 'Gerando...' : '✅ GERAR VALE DE SAÍDA'}
-            </Btn>
-          </div>
-        </div>
-      )}
-
-      {step === 3 && generated && (
-        <div style={{ textAlign:'center' }}>
-          <div style={{ fontSize:56 }}>🎉</div>
-          <h3 style={{ color: C.success, fontWeight:800, fontSize:22, marginTop:8 }}>Vale Gerado!</h3>
-          <div style={{ background:'#f0fdf4', border:'2px solid #86efac', borderRadius:16, padding:24, margin:'20px 0' }}>
-            <div style={{ fontSize:12, color: C.gray, marginBottom:4 }}>Código SmartCaçamba</div>
-            <div style={{ fontSize:26, fontWeight:900, color: C.primary, letterSpacing:3 }}>{generated}</div>
-            <div style={{ marginTop:16, display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, textAlign:'left' }}>
-              {[['🚛 Placa', form.plate], ['👤 Motorista', form.driver], ['🗑️ Resíduo', form.residue], ['📦 Volume', form.volume+' m³'], ['🏭 Destino', form.disposal]].map(([k,v]) => (
-                <div key={k} style={{ background:'#fff', borderRadius:8, padding:'8px 12px' }}>
-                  <div style={{ fontSize:11, color: C.gray }}>{k}</div>
-                  <div style={{ fontWeight:600, fontSize:13 }}>{v}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-          <Btn full onClick={() => { setStep(0); setForm({ plate:'', driver:'', residue:'Entulho Misto', volume:'10', disposal:'', notes:'' }); setPhoto(null); setPhotoPreview(null); setGenerated(null); }}>
-            + Nova Saída
-          </Btn>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// =============================================
-// 🏭 PORTARIA DESTINO FINAL
-// =============================================
-function DisposalGate({ disposalSite }) {
-  const [search, setSearch] = useState('');
-  const [voucher, setVoucher] = useState(null);
-  const [notFound, setNotFound] = useState(false);
-  const [form, setForm] = useState({ docType:'CTR', docNumber:'', weight:'', volume:'', notes:'', rejected:false, reason:'' });
-  const [photoArrival, setPhotoArrival] = useState(null);
-  const [photoPreview, setPhotoPreview] = useState(null);
-  const [ticketPhoto, setTicketPhoto] = useState(null);
-  const [ticketPreview, setTicketPreview] = useState(null);
-  const [done, setDone] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [toast, setToast] = useState('');
-
-  const showToast = (m) => { setToast(m); setTimeout(() => setToast(''), 3000); };
-
-  const handleSearch = async () => {
-    setNotFound(false); setVoucher(null);
-    const q = search.trim().toUpperCase();
-    const { data } = await supabase.from('vouchers').select('*, companies(name, credit_balance)')
-      .or(`id.eq.${q},plate.ilike.%${q}%`).eq('status', 'awaiting').maybeSingle();
-    if (!data) { setNotFound(true); return; }
-    setVoucher(data);
-  };
-
-  const handleComplete = async () => {
-    setLoading(true);
-    let arrivalUrl = null, ticketUrl = null;
-    if (photoArrival) {
-      const path = `arrivals/${Date.now()}_arrival.jpg`;
-      const { data } = await supabase.storage.from('photos').upload(path, photoArrival);
-      if (data) arrivalUrl = supabase.storage.from('photos').getPublicUrl(path).data.publicUrl;
-    }
-    if (ticketPhoto) {
-      const path = `tickets/${Date.now()}_ticket.jpg`;
-      const { data } = await supabase.storage.from('photos').upload(path, ticketPhoto);
-      if (data) ticketUrl = supabase.storage.from('photos').getPublicUrl(path).data.publicUrl;
+        );
     }
 
-    const divergence = !form.rejected && form.volume && parseFloat(form.volume) !== voucher.volume_declared;
+    // ==========================================
+    // 🚛 REGISTRO DE SAÍDA (OBRA)
+    // ==========================================
+    function RegisterDeparture() {
+        const [plate, setPlate] = useState('');
+        const [driver, setDriver] = useState('');
+        const [volume, setVolume] = useState('10');
+        const [loading, setLoading] = useState(false);
 
-    if (!form.rejected) {
-      await supabase.from('vouchers').update({
-        status: 'completed', arrival_time: now(),
-        document_number: form.docNumber, volume_confirmed: parseFloat(form.volume) || voucher.volume_declared,
-        photo_arrival_url: arrivalUrl, divergence_flag: divergence,
-      }).eq('id', voucher.id);
-      // Debitar crédito
-      await supabase.from('companies').update({ credit_balance: voucher.companies.credit_balance - 1 }).eq('id', voucher.company_id);
-      await supabase.from('credit_logs').insert({ company_id: voucher.company_id, amount: -1, description: `Débito automático — Vale ${voucher.id}` });
-      showToast('✅ Baixa concluída! Crédito debitado.');
-    } else {
-      await supabase.from('vouchers').update({ status: 'rejected', arrival_time: now(), rejection_reason: form.reason }).eq('id', voucher.id);
-      showToast('⚠️ Recusa registrada. Vale permanece válido.');
+        const handleRegister = async () => {
+            if (!plate || !driver) return alert("Preencha placa e motorista!");
+            setLoading(true);
+            // Lógica Simplificada para MVP
+            const voucherId = 'SC-' + Math.random().toString(36).substr(2, 6).toUpperCase();
+            const { error } = await supabase.from('vouchers').insert({
+                id: voucherId,
+                plate: plate.toUpperCase(),
+                driver_name: driver,
+                volume_declared: parseFloat(volume),
+                status: 'awaiting'
+            });
+            
+            if (error) alert(error.message);
+            else {
+                alert(`Vale Gerado: ${voucherId}`);
+                setPlate(''); setDriver('');
+            }
+            setLoading(false);
+        };
+
+        return (
+            <div style={{ padding: 20 }}>
+                <h2 style={{ marginBottom: 20 }}>Registrar Saída</h2>
+                <div className="card">
+                    <label style={{ fontSize: 13, fontWeight: 700 }}>PLACA DO VEÍCULO</label>
+                    <input className="input" placeholder="ABC-1234" value={plate} onChange={e=>setPlate(e.target.value)} />
+                    <label style={{ fontSize: 13, fontWeight: 700 }}>NOME DO MOTORISTA</label>
+                    <input className="input" placeholder="Nome Completo" value={driver} onChange={e=>setDriver(e.target.value)} />
+                    <label style={{ fontSize: 13, fontWeight: 700 }}>VOLUME ESTIMADO (m³)</label>
+                    <select className="input" value={volume} onChange={e=>setVolume(e.target.value)}>
+                        <option value="5">5 m³</option>
+                        <option value="10">10 m³</option>
+                        <option value="20">20 m³</option>
+                    </select>
+                    <button className="btn btn-p" onClick={handleRegister} disabled={loading}>
+                        {loading ? 'Gerando...' : 'GERAR VALE DE SAÍDA'}
+                    </button>
+                </div>
+            </div>
+        );
     }
-    setDone(true); setLoading(false);
-  };
 
-  if (done) return (
-    <div style={{ textAlign:'center', padding:32 }}>
-      <Toast msg={toast} />
-      <div style={{ fontSize:56 }}>{form.rejected ? '⚠️' : '✅'}</div>
-      <h3 style={{ color: form.rejected ? C.warning : C.success, fontWeight:800, fontSize:22, marginTop:8 }}>
-        {form.rejected ? 'Recusa Registrada' : 'Baixa Concluída!'}
-      </h3>
-      <p style={{ color: C.gray, marginTop:8 }}>{form.rejected ? 'Vale permanece válido para nova tentativa.' : '1 crédito debitado automaticamente.'}</p>
-      <div style={{ marginTop:24 }}>
-        <Btn full onClick={() => { setDone(false); setVoucher(null); setSearch(''); setForm({ docType:'CTR', docNumber:'', weight:'', volume:'', notes:'', rejected:false, reason:'' }); setPhotoArrival(null); setPhotoPreview(null); setTicketPhoto(null); setTicketPreview(null); }}>
-          Nova Entrada
-        </Btn>
-      </div>
-    </div>
-  );
+    // ==========================================
+    // 📊 APP PRINCIPAL
+    // ==========================================
+    function App() {
+        const [user, setUser] = useState(null);
+        const [view, setView] = useState('departure');
 
-  return (
-    <div>
-      <Toast msg={toast} />
-      <div style={{ marginBottom:20 }}>
-        <h2 style={{ fontSize:20, fontWeight:700, color: C.primary }}>Portaria — Destino Final</h2>
-        <p style={{ fontSize:13, color: C.gray }}>{disposalSite || 'Aterro / Bota-Fora'}</p>
-      </div>
+        useEffect(() => {
+            supabase.auth.getSession().then(({ data: { session } }) => setUser(session?.user || null));
+        }, []);
 
-      <div style={{ display:'flex', gap:10, marginBottom:16 }}>
-        <input style={{ ...inputStyle, flex:1 }} value={search} onChange={e => setSearch(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && handleSearch()} placeholder="Placa ou código do vale (SC-XXXXX)" />
-        <Btn onClick={handleSearch}>🔍</Btn>
-      </div>
+        if (!user) return <LoginView onLogin={setUser} />;
 
-      {notFound && <div style={{ background:'#fee2e2', border:'1px solid #fca5a5', borderRadius:10, padding:14, color: C.danger, fontWeight:600, textAlign:'center', marginBottom:16 }}>Vale não encontrado ou já processado.</div>}
-
-      {voucher && (
-        <div>
-          <div style={{ background:'#eff6ff', border:'1.5px solid #bfdbfe', borderRadius:12, padding:20, marginBottom:16 }}>
-            <div style={{ fontWeight:700, color: C.primary, marginBottom:12 }}>📋 Vale Localizado</div>
-            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8 }}>
-              {[['Código', voucher.id], ['Empresa', voucher.companies?.name], ['Placa', voucher.plate],
-                ['Motorista', voucher.driver_name], ['Resíduo', voucher.residue_type], ['Volume Declarado', voucher.volume_declared+' m³'],
-                ['Saída', fmtDate(voucher.departure_time)]].map(([k,v]) => (
-                <div key={k} style={{ background:'#fff', borderRadius:8, padding:'8px 12px' }}>
-                  <div style={{ fontSize:11, color: C.gray }}>{k}</div>
-                  <div style={{ fontWeight:600, fontSize:13 }}>{v}</div>
-                </div>
-              ))}
+        return (
+            <div style={{ paddingBottom: 80 }}>
+                {view === 'departure' && <RegisterDeparture />}
+                {view === 'vouchers' && <div style={{padding:20}}><h2>Histórico em Breve</h2></div>}
+                
+                <nav className="nav-bottom">
+                    <button className={`nav-item ${view==='departure'?'active':''}`} onClick={()=>setView('departure')}>
+                        <span style={{fontSize:24}}>🚛</span> Saída
+                    </button>
+                    <button className={`nav-item ${view==='vouchers'?'active':''}`} onClick={()=>setView('vouchers')}>
+                        <span style={{fontSize:24}}>📋</span> Vales
+                    </button>
+                    <button className="nav-item" onClick={()=>supabase.auth.signOut()}>
+                        <span style={{fontSize:24}}>🚪</span> Sair
+                    </button>
+                </nav>
             </div>
-          </div>
+        );
+    }
 
-          <div style={{ display:'flex', gap:10, marginBottom:16 }}>
-            <Btn full onClick={() => setForm(f => ({ ...f, rejected:false }))} color={!form.rejected ? C.success : '#e5e7eb'}>✅ Aceitar</Btn>
-            <Btn full onClick={() => setForm(f => ({ ...f, rejected:true }))} color={form.rejected ? C.danger : '#e5e7eb'}>❌ Recusar</Btn>
-          </div>
-
-          {!form.rejected ? (
-            <div>
-              <div style={{ display:'flex', gap:10 }}>
-                <Field label="Tipo Doc *">
-                  <select style={inputStyle} value={form.docType} onChange={e => setForm(f => ({ ...f, docType: e.target.value }))}>
-                    <option>CTR</option><option>MTR</option><option>Outro</option>
-                  </select>
-                </Field>
-                <Field label="Número do Documento *">
-                  <input style={inputStyle} value={form.docNumber} onChange={e => setForm(f => ({ ...f, docNumber: e.target.value }))} placeholder="Ex: CTR-2024-001" />
-                </Field>
-              </div>
-              <div style={{ display:'flex', gap:10 }}>
-                <Field label="Peso Bruto (kg)">
-                  <input style={inputStyle} type="number" value={form.weight} onChange={e => setForm(f => ({ ...f, weight: e.target.value }))} placeholder="8500" />
-                </Field>
-                <Field label="Volume Confirmado (m³)">
-                  <input style={inputStyle} type="number" value={form.volume} onChange={e => setForm(f => ({ ...f, volume: e.target.value }))} placeholder={voucher.volume_declared} />
-                </Field>
-              </div>
-              <div style={{ display:'flex', gap:10, marginBottom:14 }}>
-                <label style={{ flex:1, background: photoPreview ? '#dcfce7' : '#f8fafc', border: photoPreview ? '2px solid #16a34a' : '2px dashed #cbd5e1', borderRadius:10, padding:16, textAlign:'center', cursor:'pointer' }}>
-                  {photoPreview ? <img src={photoPreview} alt="" style={{ maxHeight:80, borderRadius:6 }} /> : <><div style={{ fontSize:28 }}>📷</div><div style={{ fontSize:12, fontWeight:600, color: C.gray, marginTop:4 }}>Foto da Carga *</div></>}
-                  <input type="file" accept="image/*" capture="environment" onChange={e => { const f = e.target.files[0]; setPhotoArrival(f); setPhotoPreview(URL.createObjectURL(f)); }} style={{ display:'none' }} />
-                </label>
-                <label style={{ flex:1, background: ticketPreview ? '#dcfce7' : '#f8fafc', border: ticketPreview ? '2px solid #16a34a' : '2px dashed #cbd5e1', borderRadius:10, padding:16, textAlign:'center', cursor:'pointer' }}>
-                  {ticketPreview ? <img src={ticketPreview} alt="" style={{ maxHeight:80, borderRadius:6 }} /> : <><div style={{ fontSize:28 }}>🧾</div><div style={{ fontSize:12, fontWeight:600, color: C.gray, marginTop:4 }}>Ticket/CTR *</div></>}
-                  <input type="file" accept="image/*" capture="environment" onChange={e => { const f = e.target.files[0]; setTicketPhoto(f); setTicketPreview(URL.createObjectURL(f)); }} style={{ display:'none' }} />
-                </label>
-              </div>
-              <Btn full onClick={handleComplete} disabled={!form.docNumber || !photoArrival || !ticketPhoto || loading} color={C.success}>
-                {loading ? 'Processando...' : '✅ CONFIRMAR BAIXA E DEBITAR CRÉDITO'}
-              </Btn>
-            </div>
-          ) : (
-            <div>
-              <Field label="Motivo da Recusa *">
-                <select style={{ ...inputStyle, border:'1.5px solid #fca5a5' }} value={form.reason} onChange={e => setForm(f => ({ ...f, reason: e.target.value }))}>
-                  <option value="">Selecione...</option>
-                  {['Resíduo incompatível','Material misturado','Documento ausente','Volume não aceito','Carga fora do padrão','Outro'].map(r => <option key={r}>{r}</option>)}
-                </select>
-              </Field>
-              <Field label="Observações">
-                <textarea style={{ ...inputStyle, resize:'none' }} rows={3} value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} placeholder="Descreva o motivo..." />
-              </Field>
-              <div style={{ background:'#fffbeb', border:'1px solid #fde68a', borderRadius:10, padding:12, fontSize:13, color:'#92400e', marginBottom:14 }}>
-                ⚠️ O vale <strong>não será cancelado</strong>. Permanecerá válido para nova tentativa.
-              </div>
-              <Btn full onClick={handleComplete} disabled={!form.reason || loading} color={C.danger}>
-                {loading ? 'Registrando...' : '❌ REGISTRAR RECUSA'}
-              </Btn>
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// =============================================
-// 📋 PAINEL DE VALES
-// =============================================
-function VouchersPanel({ companyId }) {
-  const [vouchers, setVouchers] = useState([]);
-  const [filter, setFilter] = useState('all');
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    let q = supabase.from('vouchers').select('*, companies(name)').order('departure_time', { ascending: false });
-    if (companyId) q = q.eq('company_id', companyId);
-    q.then(({ data }) => { setVouchers(data || []); setLoading(false); });
-  }, []);
-
-  const filtered = filter === 'all' ? vouchers : vouchers.filter(v => v.status === filter);
-
-  if (loading) return <div style={{ padding:40, textAlign:'center', color: C.gray }}>Carregando...</div>;
-
-  return (
-    <div>
-      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:16 }}>
-        <h2 style={{ fontSize:20, fontWeight:700, color: C.primary }}>Painel de Vales</h2>
-      </div>
-      <div style={{ display:'flex', gap:8, marginBottom:16, flexWrap:'wrap' }}>
-        {[['all','Todos'], ['completed','Concluídos'], ['awaiting','Aguardando'], ['rejected','Recusados']].map(([k,l]) => (
-          <button key={k} onClick={() => setFilter(k)} style={{ background: filter === k ? C.primary : '#e5e7eb', color: filter === k ? '#fff' : C.gray, border:'none', borderRadius:20, padding:'6px 16px', fontWeight:600, cursor:'pointer', fontSize:13 }}>{l}</button>
-        ))}
-      </div>
-      <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
-        {filtered.length === 0 && <div style={{ textAlign:'center', color: C.gray, padding:32 }}>Nenhum vale encontrado.</div>}
-        {filtered.map(v => (
-          <div key={v.id} style={{ background: C.white, borderRadius:12, padding:18, boxShadow:'0 1px 4px #0001', border: v.divergence_flag ? '1.5px solid #fca5a5' : '1px solid #e5e7eb' }}>
-            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', flexWrap:'wrap', gap:8, marginBottom:10 }}>
-              <div>
-                <span style={{ fontWeight:700, fontSize:14, color: C.primary, fontFamily:'monospace' }}>{v.id}</span>
-                {v.divergence_flag && <span style={{ background:'#fee2e2', color: C.danger, fontSize:11, padding:'2px 8px', borderRadius:20, fontWeight:600, marginLeft:8 }}>⚠️ Divergência</span>}
-              </div>
-              <Badge status={v.status} />
-            </div>
-            <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(110px, 1fr))', gap:8 }}>
-              {[['🚛 Placa', v.plate], ['👤 Motorista', v.driver_name], ['🗑️ Resíduo', v.residue_type],
-                ['📦 Vol. Dec.', v.volume_declared+' m³'], ['📦 Vol. Conf.', v.volume_confirmed ? v.volume_confirmed+' m³' : '-'],
-                ['🏭 Destino', v.disposal_site], ['📄 Documento', v.document_number || '-'],
-                ['⏰ Saída', fmtDate(v.departure_time)], ['⏰ Chegada', fmtDate(v.arrival_time)]].map(([k,val]) => (
-                <div key={k} style={{ background:'#f8fafc', borderRadius:8, padding:'6px 10px' }}>
-                  <div style={{ fontSize:10, color: C.gray }}>{k}</div>
-                  <div style={{ fontWeight:600, fontSize:12, color:'#1e293b' }}>{val}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// =============================================
-// 🚀 APP PRINCIPAL
-// =============================================
-function App() {
-  const [user, setUser] = useState(null);
-  const [profile, setProfile] = useState(null);
-  const [activeTab, setActiveTab] = useState('dashboard');
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) loadProfile(session.user);
-      else setLoading(false);
-    });
-    supabase.auth.onAuthStateChange((_e, session) => {
-      if (session) loadProfile(session.user);
-      else { setUser(null); setProfile(null); setLoading(false); }
-    });
-  }, []);
-
-  const loadProfile = async (u) => {
-    setUser(u);
-    // Aqui você pode buscar o perfil do usuário na tabela 'profiles' para saber o role
-    // Por ora, usamos o email para determinar o tipo (admin, company, disposal)
-    const role = u.email.includes('admin') ? 'admin' : u.email.includes('destino') ? 'disposal' : 'company';
-    setProfile({ role, companyId: null }); // companyId deve vir do banco
-    setActiveTab(role === 'disposal' ? 'disposal' : 'dashboard');
-    setLoading(false);
-  };
-
-  const handleLogout = async () => { await supabase.auth.signOut(); };
-
-  if (loading) return <div style={{ minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', background: C.bg }}><div style={{ fontSize:48 }}>🚛</div></div>;
-  if (!user) return <Login onLogin={loadProfile} />;
-
-  const role = profile?.role;
-  const tabs = role === 'admin'
-    ? [{ id:'dashboard', label:'Dashboard', icon:'📊' }, { id:'companies', label:'Empresas', icon:'🏢' }, { id:'vouchers', label:'Vales', icon:'📋' }]
-    : role === 'disposal'
-    ? [{ id:'disposal', label:'Portaria', icon:'🏭' }, { id:'vouchers', label:'Histórico', icon:'📋' }]
-    : [{ id:'departure', label:'Saída', icon:'🚛' }, { id:'vouchers', label:'Vales', icon:'📋' }];
-
-  return (
-    <div style={{ fontFamily:'system-ui, -apple-system, sans-serif', background: C.bg, minHeight:'100vh' }}>
-      <div style={{ background: C.primary, padding:'0 20px', display:'flex', alignItems:'center', justifyContent:'space-between', height:56, position:'sticky', top:0, zIndex:100 }}>
-        <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-          <span style={{ fontSize:22 }}>🚛</span>
-          <span style={{ color:'#fff', fontWeight:800, fontSize:18 }}>SmartCaçamba</span>
-        </div>
-        <button onClick={handleLogout} style={{ background:'rgba(255,255,255,0.15)', color:'#fff', border:'none', borderRadius:20, padding:'6px 14px', fontWeight:600, cursor:'pointer', fontSize:13 }}>Sair</button>
-      </div>
-
-      <div style={{ maxWidth:800, margin:'0 auto', padding:'20px 16px 100px' }}>
-        {activeTab === 'dashboard' && <AdminDashboard />}
-        {activeTab === 'companies' && <AdminDashboard />}
-        {activeTab === 'departure' && <RegisterDeparture companyId={profile?.companyId} />}
-        {activeTab === 'disposal' && <DisposalGate disposalSite="Aterro Verde SP" />}
-        {activeTab === 'vouchers' && <VouchersPanel companyId={role !== 'admin' ? profile?.companyId : null} />}
-      </div>
-
-      <div style={{ position:'fixed', bottom:0, left:0, right:0, background: C.white, borderTop:'1px solid #e5e7eb', display:'flex', justifyContent:'center', padding:'8px 0', zIndex:100 }}>
-        <div style={{ display:'flex', gap:4, maxWidth:800, width:'100%', padding:'0 16px' }}>
-          {tabs.map(t => (
-            <button key={t.id} onClick={() => setActiveTab(t.id)} style={{ flex:1, background: activeTab === t.id ? '#eff6ff' : 'transparent', color: activeTab === t.id ? C.primary : C.gray, border:'none', borderRadius:10, padding:'10px 4px', fontWeight: activeTab === t.id ? 700 : 400, cursor:'pointer', fontSize:12, display:'flex', flexDirection:'column', alignItems:'center', gap:2 }}>
-              <span style={{ fontSize:20 }}>{t.icon}</span>{t.label}
-            </button>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
 </script>
 </body>
 </html>
