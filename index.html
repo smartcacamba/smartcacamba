@@ -47,7 +47,7 @@
 
         const handleLogin = async () => {
             setLoading(true);
-            const { data, error } = await supabase.auth.signInWithPassword({ email, password: pass });
+            const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password: pass });
             if (error) alert("Erro: " + error.message);
             else onLogin(data.user);
             setLoading(false);
