@@ -1,161 +1,538 @@
-veja se o código que está no github está correto
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SmartCaçamba - Painel Operacional</title>
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <title>SmartCaçamba</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
     <style>
-        :root { --p: #1e40af; --s: #16a34a; --d: #dc2626; --w: #d97706; --bg: #f1f5f9; --txt: #1e293b; }
-        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-        body { font-family: -apple-system, system-ui, sans-serif; background: var(--bg); color: var(--txt); line-height: 1.5; }
-        .btn { border: none; border-radius: 12px; padding: 14px 20px; font-weight: 700; cursor: pointer; transition: 0.2s; font-size: 15px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; }
-        .btn-p { background: var(--p); color: #fff; }
-        .btn-s { background: var(--s); color: #fff; }
-        .btn-ghost { background: #e2e8f0; color: #475569; }
-        .input { width: 100%; padding: 14px; border-radius: 10px; border: 1.5px solid #cbd5e1; font-size: 16px; margin-bottom: 15px; outline: none; transition: 0.2s; }
-        .input:focus { border-color: var(--p); box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1); }
-        .card { background: #fff; border-radius: 16px; padding: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); margin-bottom: 20px; border: 1px solid #e2e8f0; }
-        .badge { padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 700; text-transform: uppercase; }
-        .nav-bottom { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; border-top: 1px solid #e2e8f0; display: flex; padding: 10px; z-index: 100; }
-        .nav-item { flex: 1; text-align: center; border: none; background: none; font-size: 11px; font-weight: 600; color: #64748b; cursor: pointer; display: flex; flexDirection: column; align-items: center; gap: 4px; }
-        .nav-item.active { color: var(--p); }
-        .loading-overlay { position: fixed; inset: 0; background: rgba(255,255,255,0.8); display: flex; align-items: center; justify-content: center; z-index: 1000; font-weight: 800; color: var(--p); }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f1f5f9; color: #1e293b; }
+        .btn { border: none; border-radius: 12px; padding: 14px 20px; font-weight: 700; cursor: pointer; font-size: 15px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; transition: opacity 0.2s; }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .btn-blue { background: #1e40af; color: #fff; }
+        .btn-green { background: #16a34a; color: #fff; }
+        .btn-red { background: #dc2626; color: #fff; }
+        .btn-gray { background: #e2e8f0; color: #475569; }
+        .input { width: 100%; padding: 13px 14px; border-radius: 10px; border: 1.5px solid #cbd5e1; font-size: 16px; margin-bottom: 14px; outline: none; background: #fff; }
+        .input:focus { border-color: #1e40af; box-shadow: 0 0 0 3px rgba(30,64,175,0.1); }
+        .card { background: #fff; border-radius: 16px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 16px; border: 1px solid #e2e8f0; }
+        .badge { padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; text-transform: uppercase; display: inline-block; }
+        .badge-green { background: #dcfce7; color: #16a34a; }
+        .badge-blue { background: #dbeafe; color: #1e40af; }
+        .badge-yellow { background: #fef9c3; color: #ca8a04; }
+        .badge-red { background: #fee2e2; color: #dc2626; }
+        .badge-gray { background: #f1f5f9; color: #64748b; }
+        .nav-bottom { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; border-top: 1px solid #e2e8f0; display: flex; padding: 8px 0 12px; z-index: 100; }
+        .nav-item { flex: 1; text-align: center; border: none; background: none; font-size: 10px; font-weight: 600; color: #94a3b8; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 4px; }
+        .nav-item.active { color: #1e40af; }
+        .nav-icon { font-size: 22px; }
+        .page { padding: 20px; padding-bottom: 90px; min-height: 100vh; }
+        .header { background: #1e40af; color: #fff; padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; }
+        .header h2 { font-size: 18px; font-weight: 800; }
+        .credit-bar { background: linear-gradient(135deg, #1e40af, #3b82f6); color: #fff; padding: 16px 20px; margin-bottom: 16px; border-radius: 16px; }
+        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+        .stat-card { background: #fff; border-radius: 12px; padding: 16px; border: 1px solid #e2e8f0; text-align: center; }
+        .stat-num { font-size: 28px; font-weight: 900; color: #1e40af; }
+        .stat-label { font-size: 11px; color: #64748b; font-weight: 600; margin-top: 4px; }
+        .voucher-item { background: #fff; border-radius: 12px; padding: 14px; margin-bottom: 10px; border: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: space-between; }
+        .voucher-id { font-weight: 800; font-size: 15px; color: #1e40af; }
+        .voucher-info { font-size: 12px; color: #64748b; margin-top: 2px; }
+        .section-title { font-size: 13px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; margin-top: 4px; }
+        .alert { padding: 12px 16px; border-radius: 10px; margin-bottom: 14px; font-size: 14px; font-weight: 600; }
+        .alert-red { background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5; }
+        .alert-green { background: #dcfce7; color: #16a34a; border: 1px solid #86efac; }
+        .alert-yellow { background: #fef9c3; color: #ca8a04; border: 1px solid #fde047; }
+        .divider { height: 1px; background: #e2e8f0; margin: 16px 0; }
+        select.input { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748b' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; }
+        textarea.input { resize: vertical; min-height: 80px; }
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200; display: flex; align-items: flex-end; }
+        .modal { background: #fff; border-radius: 20px 20px 0 0; padding: 24px; width: 100%; max-height: 90vh; overflow-y: auto; }
+        .modal-title { font-size: 18px; font-weight: 800; margin-bottom: 16px; }
+        label.field-label { display: block; font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 6px; }
     </style>
 </head>
 <body>
 <div id="root"></div>
-
 <script type="text/babel">
-    const { useState, useEffect } = React;
+const { useState, useEffect, useCallback } = React;
 
-    // 🔗 CONFIGURAÇÃO SUPABASE
-    const SUPABASE_URL = 'https://kqllnugiitlqqdwurafk.supabase.co'; 
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtxbGxudWdpaXRscXFkd3VyYWZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQyMjc0OTksImV4cCI6MjA5OTgwMzQ5OX0.E_iLphEre9LQqhflbo9rZ0mT729a-BGFPC7RbNSpR8Q';
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// ============================================================
+// CONFIGURAÇÃO SUPABASE
+// ============================================================
+// ATENÇÃO: Substitua os valores abaixo pelas suas chaves reais
+const SUPABASE_URL = 'https://kqllnugiitlqqdwurafk.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtxbGxudWdpaXRscXFkd3VyYWZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQyMjc0OTksImV4cCI6MjA5OTgwMzQ5OX0.E_iLphEre9LQqhflbo9rZ0mT729a-BGFPC7RbNSpR8Q';
 
-    // ==========================================
-    // 🔐 COMPONENTE DE LOGIN
-    // ==========================================
-    function LoginView({ onLogin }) {
-        const [email, setEmail] = useState('');
-        const [pass, setPass] = useState('');
-        const [loading, setLoading] = useState(false);
+// Simulação do Supabase para funcionar sem conexão real no preview
+const mockDB = {
+    users: [{ email: 'admin@teste.com', password: '123456', role: 'admin', company: 'Construtora ABC' }],
+    vouchers: [
+        { id: 'SC-A1B2C3', plate: 'ABC-1234', driver: 'João Silva', volume: 10, status: 'awaiting', date: '2025-07-15', residue: 'Entulho Misto' },
+        { id: 'SC-D4E5F6', plate: 'XYZ-9876', driver: 'Carlos Souza', volume: 5, status: 'completed', date: '2025-07-14', residue: 'Terra' },
+        { id: 'SC-G7H8I9', plate: 'DEF-4567', driver: 'Pedro Lima', volume: 20, status: 'rejected', date: '2025-07-13', residue: 'Entulho Misto' },
+    ],
+    credits: 47
+};
 
-        const handleLogin = async () => {
-            setLoading(true);
-            const { data, error } = await supabase.auth.signInWithPassword({ email, password: pass });
-            if (error) alert("Erro: " + error.message);
-            else onLogin(data.user);
-            setLoading(false);
-        };
+// ============================================================
+// UTILITÁRIOS
+// ============================================================
+const genId = () => 'SC-' + Math.random().toString(36).substr(2,6).toUpperCase();
+const fmtDate = (d) => new Date(d).toLocaleDateString('pt-BR');
+const statusLabel = { awaiting: 'Aguardando', in_transit: 'Em Trânsito', completed: 'Concluído', rejected: 'Rejeitado', cancelled: 'Cancelado' };
+const statusBadge = { awaiting: 'badge-yellow', in_transit: 'badge-blue', completed: 'badge-green', rejected: 'badge-red', cancelled: 'badge-gray' };
 
-        return (
-            <div style={{ padding: 40, minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                <div style={{ textAlign: 'center', marginBottom: 40 }}>
-                    <h1 style={{ fontSize: 32, fontWeight: 900, color: '#1e40af' }}>SmartCaçamba</h1>
-                    <p style={{ color: '#64748b' }}>Gestão Inteligente de Resíduos</p>
+// ============================================================
+// TELA DE LOGIN
+// ============================================================
+function LoginScreen({ onLogin }) {
+    const [email, setEmail] = useState('');
+    const [pass, setPass] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
+
+    const handleLogin = async () => {
+        if (!email || !pass) { setError('Preencha e-mail e senha.'); return; }
+        setLoading(true); setError('');
+        await new Promise(r => setTimeout(r, 800));
+        const user = mockDB.users.find(u => u.email === email && u.password === pass);
+        if (user) onLogin(user);
+        else setError('E-mail ou senha inválidos.');
+        setLoading(false);
+    };
+
+    return (
+        <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '40px 24px', background: 'linear-gradient(160deg, #1e3a8a 0%, #1e40af 50%, #3b82f6 100%)' }}>
+            <div style={{ textAlign: 'center', marginBottom: 40 }}>
+                <div style={{ fontSize: 56, marginBottom: 12 }}>🚛</div>
+                <h1 style={{ fontSize: 34, fontWeight: 900, color: '#fff', letterSpacing: -1 }}>SmartCaçamba</h1>
+                <p style={{ color: 'rgba(255,255,255,0.75)', fontSize: 15, marginTop: 6 }}>Gestão Inteligente de Resíduos</p>
+            </div>
+            <div style={{ background: '#fff', borderRadius: 20, padding: 28, boxShadow: '0 20px 60px rgba(0,0,0,0.3)' }}>
+                {error && <div className="alert alert-red">{error}</div>}
+                <label className="field-label">E-MAIL</label>
+                <input className="input" type="email" placeholder="seu@email.com" value={email} onChange={e => setEmail(e.target.value)} />
+                <label className="field-label">SENHA</label>
+                <input className="input" type="password" placeholder="••••••••" value={pass} onChange={e => setPass(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleLogin()} />
+                <button className="btn btn-blue" onClick={handleLogin} disabled={loading} style={{ marginTop: 4 }}>
+                    {loading ? '⏳ Entrando...' : '🔐 Entrar na Plataforma'}
+                </button>
+                <p style={{ textAlign: 'center', fontSize: 12, color: '#94a3b8', marginTop: 16 }}>
+                    Demo: admin@teste.com / 123456
+                </p>
+            </div>
+        </div>
+    );
+}
+
+// ============================================================
+// DASHBOARD
+// ============================================================
+function Dashboard({ user, credits }) {
+    const total = mockDB.vouchers.length;
+    const concluidos = mockDB.vouchers.filter(v => v.status === 'completed').length;
+    const aguardando = mockDB.vouchers.filter(v => v.status === 'awaiting').length;
+    const rejeitados = mockDB.vouchers.filter(v => v.status === 'rejected').length;
+
+    return (
+        <div className="page">
+            <div className="credit-bar" style={{ borderRadius: 16, marginBottom: 16 }}>
+                <div style={{ fontSize: 12, fontWeight: 700, opacity: 0.8, marginBottom: 4 }}>SALDO DE CRÉDITOS</div>
+                <div style={{ fontSize: 42, fontWeight: 900 }}>{credits} <span style={{ fontSize: 16, opacity: 0.8 }}>créditos</span></div>
+                <div style={{ fontSize: 12, opacity: 0.75, marginTop: 4 }}>≈ R$ {(credits * 3).toFixed(2)} em operações disponíveis</div>
+            </div>
+
+            {credits < 10 && (
+                <div className="alert alert-yellow">⚠️ Saldo baixo! Recarregue seus créditos para continuar operando.</div>
+            )}
+
+            <p className="section-title">Resumo Operacional</p>
+            <div className="stat-grid">
+                <div className="stat-card">
+                    <div className="stat-num">{total}</div>
+                    <div className="stat-label">Total de Vales</div>
                 </div>
-                <input className="input" type="email" placeholder="E-mail" value={email} onChange={e=>setEmail(e.target.value)} />
-                <input className="input" type="password" placeholder="Senha" value={pass} onChange={e=>setPass(e.target.value)} />
-                <button className="btn btn-p" onClick={handleLogin} disabled={loading}>
-                    {loading ? 'Entrando...' : 'Entrar na Plataforma'}
+                <div className="stat-card">
+                    <div className="stat-num" style={{ color: '#16a34a' }}>{concluidos}</div>
+                    <div className="stat-label">Concluídos</div>
+                </div>
+                <div className="stat-card">
+                    <div className="stat-num" style={{ color: '#d97706' }}>{aguardando}</div>
+                    <div className="stat-label">Aguardando</div>
+                </div>
+                <div className="stat-card">
+                    <div className="stat-num" style={{ color: '#dc2626' }}>{rejeitados}</div>
+                    <div className="stat-label">Rejeitados</div>
+                </div>
+            </div>
+
+            <p className="section-title">Últimos Vales</p>
+            {mockDB.vouchers.slice(0,3).map(v => (
+                <div className="voucher-item" key={v.id}>
+                    <div>
+                        <div className="voucher-id">{v.id}</div>
+                        <div className="voucher-info">{v.plate} · {v.driver} · {v.volume}m³</div>
+                        <div className="voucher-info">{fmtDate(v.date)}</div>
+                    </div>
+                    <span className={`badge ${statusBadge[v.status]}`}>{statusLabel[v.status]}</span>
+                </div>
+            ))}
+        </div>
+    );
+}
+
+// ============================================================
+// REGISTRAR SAÍDA
+// ============================================================
+function RegisterDeparture({ credits, onVoucherCreated }) {
+    const [plate, setPlate] = useState('');
+    const [driver, setDriver] = useState('');
+    const [volume, setVolume] = useState('10');
+    const [residue, setResidue] = useState('Entulho Misto');
+    const [obs, setObs] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [success, setSuccess] = useState('');
+    const [error, setError] = useState('');
+
+    const handleRegister = async () => {
+        if (!plate || !driver) { setError('Preencha placa e motorista.'); return; }
+        if (credits <= 0) { setError('Saldo insuficiente. Recarregue seus créditos.'); return; }
+        setLoading(true); setError(''); setSuccess('');
+        await new Promise(r => setTimeout(r, 1000));
+        const id = genId();
+        const newVoucher = { id, plate: plate.toUpperCase(), driver, volume: parseFloat(volume), residue, obs, status: 'awaiting', date: new Date().toISOString().split('T')[0] };
+        mockDB.vouchers.unshift(newVoucher);
+        setSuccess(`✅ Vale ${id} gerado com sucesso!`);
+        setPlate(''); setDriver(''); setObs('');
+        onVoucherCreated();
+        setLoading(false);
+    };
+
+    return (
+        <div className="page">
+            <p className="section-title">Novo Vale de Saída</p>
+
+            {credits <= 0 && <div className="alert alert-red">🚫 Saldo zerado. Não é possível gerar novos vales.</div>}
+            {error && <div className="alert alert-red">{error}</div>}
+            {success && <div className="alert alert-green">{success}</div>}
+
+            <div className="card">
+                <label className="field-label">PLACA DO VEÍCULO *</label>
+                <input className="input" placeholder="ABC-1234" value={plate} onChange={e => setPlate(e.target.value.toUpperCase())} maxLength={8} />
+
+                <label className="field-label">MOTORISTA *</label>
+                <input className="input" placeholder="Nome completo" value={driver} onChange={e => setDriver(e.target.value)} />
+
+                <label className="field-label">TIPO DE RESÍDUO</label>
+                <select className="input" value={residue} onChange={e => setResidue(e.target.value)}>
+                    <option>Entulho Misto</option>
+                    <option>Terra</option>
+                    <option>Concreto</option>
+                    <option>Madeira</option>
+                    <option>Metal</option>
+                    <option>Gesso</option>
+                    <option>Outros</option>
+                </select>
+
+                <label className="field-label">VOLUME ESTIMADO (m³)</label>
+                <select className="input" value={volume} onChange={e => setVolume(e.target.value)}>
+                    {[3,5,7,10,15,20,25,30].map(v => <option key={v} value={v}>{v} m³</option>)}
+                </select>
+
+                <label className="field-label">OBSERVAÇÕES</label>
+                <textarea className="input" placeholder="Informações adicionais..." value={obs} onChange={e => setObs(e.target.value)} />
+
+                <div style={{ background: '#f8fafc', borderRadius: 10, padding: 12, marginBottom: 14, fontSize: 13, color: '#64748b' }}>
+                    💳 Custo: <strong>1 crédito</strong> · Saldo atual: <strong>{credits} créditos</strong>
+                </div>
+
+                <button className="btn btn-blue" onClick={handleRegister} disabled={loading || credits <= 0}>
+                    {loading ? '⏳ Gerando Vale...' : '🚛 GERAR VALE DE SAÍDA'}
                 </button>
             </div>
-        );
-    }
+        </div>
+    );
+}
 
-    // ==========================================
-    // 🚛 REGISTRO DE SAÍDA (OBRA)
-    // ==========================================
-    function RegisterDeparture() {
-        const [plate, setPlate] = useState('');
-        const [driver, setDriver] = useState('');
-        const [volume, setVolume] = useState('10');
-        const [loading, setLoading] = useState(false);
+// ============================================================
+// LISTA DE VALES
+// ============================================================
+function VoucherList() {
+    const [filter, setFilter] = useState('all');
+    const [search, setSearch] = useState('');
 
-        const handleRegister = async () => {
-            if (!plate || !driver) return alert("Preencha placa e motorista!");
-            setLoading(true);
-            // Lógica Simplificada para MVP
-            const voucherId = 'SC-' + Math.random().toString(36).substr(2, 6).toUpperCase();
-            const { error } = await supabase.from('vouchers').insert({
-                id: voucherId,
-                plate: plate.toUpperCase(),
-                driver_name: driver,
-                volume_declared: parseFloat(volume),
-                status: 'awaiting'
-            });
-            
-            if (error) alert(error.message);
-            else {
-                alert(`Vale Gerado: ${voucherId}`);
-                setPlate(''); setDriver('');
-            }
-            setLoading(false);
-        };
+    const filtered = mockDB.vouchers.filter(v => {
+        const matchStatus = filter === 'all' || v.status === filter;
+        const matchSearch = !search || v.id.includes(search.toUpperCase()) || v.plate.includes(search.toUpperCase()) || v.driver.toLowerCase().includes(search.toLowerCase());
+        return matchStatus && matchSearch;
+    });
 
-        return (
-            <div style={{ padding: 20 }}>
-                <h2 style={{ marginBottom: 20 }}>Registrar Saída</h2>
+    return (
+        <div className="page">
+            <input className="input" placeholder="🔍 Buscar por ID, placa ou motorista..." value={search} onChange={e => setSearch(e.target.value)} style={{ marginBottom: 10 }} />
+
+            <div style={{ display: 'flex', gap: 8, marginBottom: 16, overflowX: 'auto', paddingBottom: 4 }}>
+                {[['all','Todos'],['awaiting','Aguardando'],['completed','Concluídos'],['rejected','Rejeitados']].map(([val, label]) => (
+                    <button key={val} onClick={() => setFilter(val)} style={{ border: 'none', borderRadius: 20, padding: '6px 14px', fontSize: 12, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap', background: filter === val ? '#1e40af' : '#e2e8f0', color: filter === val ? '#fff' : '#475569' }}>
+                        {label}
+                    </button>
+                ))}
+            </div>
+
+            {filtered.length === 0 && <div style={{ textAlign: 'center', color: '#94a3b8', padding: 40 }}>Nenhum vale encontrado.</div>}
+
+            {filtered.map(v => (
+                <div className="voucher-item" key={v.id} style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 8 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
+                        <div className="voucher-id">{v.id}</div>
+                        <span className={`badge ${statusBadge[v.status]}`}>{statusLabel[v.status]}</span>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 4, width: '100%' }}>
+                        <div className="voucher-info">🚛 {v.plate}</div>
+                        <div className="voucher-info">👤 {v.driver}</div>
+                        <div className="voucher-info">📦 {v.residue}</div>
+                        <div className="voucher-info">📐 {v.volume} m³</div>
+                        <div className="voucher-info">📅 {fmtDate(v.date)}</div>
+                    </div>
+                </div>
+            ))}
+        </div>
+    );
+}
+
+// ============================================================
+// PORTARIA / DESTINO FINAL
+// ============================================================
+function DisposalGate() {
+    const [voucherId, setVoucherId] = useState('');
+    const [found, setFound] = useState(null);
+    const [notFound, setNotFound] = useState(false);
+    const [volumeConf, setVolumeConf] = useState('');
+    const [docNum, setDocNum] = useState('');
+    const [rejReason, setRejReason] = useState('');
+    const [action, setAction] = useState('');
+    const [done, setDone] = useState('');
+
+    const search = () => {
+        const v = mockDB.vouchers.find(x => x.id === voucherId.toUpperCase().trim());
+        if (v) { setFound(v); setNotFound(false); setVolumeConf(String(v.volume)); }
+        else { setFound(null); setNotFound(true); }
+        setDone(''); setAction('');
+    };
+
+    const confirm = async (type) => {
+        if (!found) return;
+        await new Promise(r => setTimeout(r, 800));
+        found.status = type === 'approve' ? 'completed' : 'rejected';
+        if (type === 'approve') {
+            found.volumeConfirmed = parseFloat(volumeConf);
+            found.docNum = docNum;
+            mockDB.credits = Math.max(0, mockDB.credits - 1);
+            setDone(`✅ Vale ${found.id} CONCLUÍDO. 1 crédito debitado da empresa.`);
+        } else {
+            found.rejReason = rejReason;
+            setDone(`❌ Vale ${found.id} REJEITADO. Motivo: ${rejReason}`);
+        }
+        setFound(null); setVoucherId(''); setAction('');
+    };
+
+    return (
+        <div className="page">
+            <p className="section-title">Portaria — Destino Final</p>
+
+            {done && <div className={`alert ${done.startsWith('✅') ? 'alert-green' : 'alert-red'}`}>{done}</div>}
+
+            <div className="card">
+                <label className="field-label">CÓDIGO DO VALE</label>
+                <div style={{ display: 'flex', gap: 8 }}>
+                    <input className="input" placeholder="SC-XXXXXX" value={voucherId} onChange={e => setVoucherId(e.target.value.toUpperCase())} style={{ marginBottom: 0, flex: 1 }} onKeyDown={e => e.key === 'Enter' && search()} />
+                    <button className="btn btn-blue" onClick={search} style={{ width: 'auto', padding: '0 20px' }}>🔍</button>
+                </div>
+                {notFound && <div className="alert alert-red" style={{ marginTop: 12 }}>Vale não encontrado.</div>}
+            </div>
+
+            {found && (
                 <div className="card">
-                    <label style={{ fontSize: 13, fontWeight: 700 }}>PLACA DO VEÍCULO</label>
-                    <input className="input" placeholder="ABC-1234" value={plate} onChange={e=>setPlate(e.target.value)} />
-                    <label style={{ fontSize: 13, fontWeight: 700 }}>NOME DO MOTORISTA</label>
-                    <input className="input" placeholder="Nome Completo" value={driver} onChange={e=>setDriver(e.target.value)} />
-                    <label style={{ fontSize: 13, fontWeight: 700 }}>VOLUME ESTIMADO (m³)</label>
-                    <select className="input" value={volume} onChange={e=>setVolume(e.target.value)}>
-                        <option value="5">5 m³</option>
-                        <option value="10">10 m³</option>
-                        <option value="20">20 m³</option>
-                    </select>
-                    <button className="btn btn-p" onClick={handleRegister} disabled={loading}>
-                        {loading ? 'Gerando...' : 'GERAR VALE DE SAÍDA'}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                        <div className="voucher-id">{found.id}</div>
+                        <span className={`badge ${statusBadge[found.status]}`}>{statusLabel[found.status]}</span>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 16 }}>
+                        <div><div style={{ fontSize: 11, color: '#94a3b8', fontWeight: 700 }}>PLACA</div><div style={{ fontWeight: 700 }}>{found.plate}</div></div>
+                        <div><div style={{ fontSize: 11, color: '#94a3b8', fontWeight: 700 }}>MOTORISTA</div><div style={{ fontWeight: 700 }}>{found.driver}</div></div>
+                        <div><div style={{ fontSize: 11, color: '#94a3b8', fontWeight: 700 }}>RESÍDUO</div><div style={{ fontWeight: 700 }}>{found.residue}</div></div>
+                        <div><div style={{ fontSize: 11, color: '#94a3b8', fontWeight: 700 }}>VOL. DECLARADO</div><div style={{ fontWeight: 700 }}>{found.volume} m³</div></div>
+                    </div>
+
+                    {found.status !== 'awaiting' && (
+                        <div className="alert alert-yellow">Este vale já foi processado ({statusLabel[found.status]}).</div>
+                    )}
+
+                    {found.status === 'awaiting' && !action && (
+                        <div style={{ display: 'flex', gap: 10 }}>
+                            <button className="btn btn-green" onClick={() => setAction('approve')}>✅ Aprovar Entrada</button>
+                            <button className="btn btn-red" onClick={() => setAction('reject')}>❌ Rejeitar</button>
+                        </div>
+                    )}
+
+                    {action === 'approve' && (
+                        <>
+                            <div className="divider" />
+                            <label className="field-label">VOLUME CONFIRMADO (m³)</label>
+                            <input className="input" type="number" value={volumeConf} onChange={e => setVolumeConf(e.target.value)} />
+                            <label className="field-label">Nº DO DOCUMENTO / CTR</label>
+                            <input className="input" placeholder="Número do documento" value={docNum} onChange={e => setDocNum(e.target.value)} />
+                            {parseFloat(volumeConf) !== found.volume && volumeConf && (
+                                <div className="alert alert-yellow">⚠️ Divergência de volume detectada! Declarado: {found.volume}m³ · Confirmado: {volumeConf}m³</div>
+                            )}
+                            <button className="btn btn-green" onClick={() => confirm('approve')}>✅ CONFIRMAR ENTRADA E DEBITAR CRÉDITO</button>
+                        </>
+                    )}
+
+                    {action === 'reject' && (
+                        <>
+                            <div className="divider" />
+                            <label className="field-label">MOTIVO DA REJEIÇÃO</label>
+                            <select className="input" value={rejReason} onChange={e => setRejReason(e.target.value)}>
+                                <option value="">Selecione...</option>
+                                <option>Material não permitido</option>
+                                <option>Documentação irregular</option>
+                                <option>Veículo não autorizado</option>
+                                <option>Capacidade esgotada</option>
+                                <option>Outro</option>
+                            </select>
+                            <button className="btn btn-red" onClick={() => confirm('reject')} disabled={!rejReason}>❌ CONFIRMAR REJEIÇÃO</button>
+                        </>
+                    )}
+                </div>
+            )}
+        </div>
+    );
+}
+
+// ============================================================
+// CRÉDITOS
+// ============================================================
+function Credits({ credits, onRecharge }) {
+    const [amount, setAmount] = useState('10');
+    const [loading, setLoading] = useState(false);
+    const [success, setSuccess] = useState('');
+
+    const recharge = async () => {
+        setLoading(true); setSuccess('');
+        await new Promise(r => setTimeout(r, 800));
+        mockDB.credits += parseInt(amount);
+        setSuccess(`✅ ${amount} créditos adicionados com sucesso!`);
+        onRecharge();
+        setLoading(false);
+    };
+
+    const packages = [
+        { credits: 10, price: 30, label: 'Básico' },
+        { credits: 30, price: 80, label: 'Profissional', highlight: true },
+        { credits: 100, price: 250, label: 'Empresarial' },
+    ];
+
+    return (
+        <div className="page">
+            <p className="section-title">Saldo Atual</p>
+            <div className="credit-bar" style={{ borderRadius: 16, marginBottom: 16 }}>
+                <div style={{ fontSize: 12, fontWeight: 700, opacity: 0.8 }}>CRÉDITOS DISPONÍVEIS</div>
+                <div style={{ fontSize: 48, fontWeight: 900 }}>{credits}</div>
+                <div style={{ fontSize: 13, opacity: 0.8 }}>Cada vale concluído consome 1 crédito (R$ 3,00)</div>
+            </div>
+
+            {success && <div className="alert alert-green">{success}</div>}
+
+            <p className="section-title">Pacotes de Recarga</p>
+            {packages.map(pkg => (
+                <div key={pkg.credits} className="card" style={{ border: pkg.highlight ? '2px solid #1e40af' : '1px solid #e2e8f0', position: 'relative' }}>
+                    {pkg.highlight && <span className="badge badge-blue" style={{ position: 'absolute', top: -10, right: 16 }}>MAIS POPULAR</span>}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div>
+                            <div style={{ fontWeight: 800, fontSize: 18 }}>{pkg.credits} créditos</div>
+                            <div style={{ color: '#64748b', fontSize: 13 }}>{pkg.label} · R$ {(pkg.price / pkg.credits).toFixed(2)}/crédito</div>
+                        </div>
+                        <div style={{ textAlign: 'right' }}>
+                            <div style={{ fontWeight: 900, fontSize: 22, color: '#1e40af' }}>R$ {pkg.price}</div>
+                            <button className="btn btn-blue" onClick={() => { setAmount(String(pkg.credits)); recharge(); }} style={{ width: 'auto', padding: '8px 16px', fontSize: 13, marginTop: 6 }} disabled={loading}>
+                                Recarregar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            ))}
+
+            <div className="divider" />
+            <p className="section-title">Recarga Manual</p>
+            <div className="card">
+                <label className="field-label">QUANTIDADE DE CRÉDITOS</label>
+                <input className="input" type="number" value={amount} onChange={e => setAmount(e.target.value)} min="1" />
+                <button className="btn btn-green" onClick={recharge} disabled={loading}>
+                    {loading ? '⏳ Processando...' : '💳 ADICIONAR CRÉDITOS'}
+                </button>
+            </div>
+        </div>
+    );
+}
+
+// ============================================================
+// APP PRINCIPAL
+// ============================================================
+function App() {
+    const [user, setUser] = useState(null);
+    const [view, setView] = useState('dashboard');
+    const [credits, setCredits] = useState(mockDB.credits);
+    const [tick, setTick] = useState(0);
+
+    const refresh = () => { setCredits(mockDB.credits); setTick(t => t + 1); };
+
+    if (!user) return <LoginScreen onLogin={u => { setUser(u); }} />;
+
+    const navItems = [
+        { id: 'dashboard', icon: '📊', label: 'Início' },
+        { id: 'departure', icon: '🚛', label: 'Saída' },
+        { id: 'vouchers', icon: '📋', label: 'Vales' },
+        { id: 'gate', icon: '🏭', label: 'Portaria' },
+        { id: 'credits', icon: '💳', label: 'Créditos' },
+    ];
+
+    return (
+        <div>
+            <div className="header">
+                <h2>🚛 SmartCaçamba</h2>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <span style={{ background: 'rgba(255,255,255,0.2)', borderRadius: 20, padding: '4px 12px', fontSize: 13, fontWeight: 700 }}>
+                        💳 {credits}
+                    </span>
+                    <button onClick={() => setUser(null)} style={{ background: 'rgba(255,255,255,0.15)', border: 'none', color: '#fff', borderRadius: 8, padding: '6px 12px', cursor: 'pointer', fontSize: 13 }}>
+                        Sair
                     </button>
                 </div>
             </div>
-        );
-    }
 
-    // ==========================================
-    // 📊 APP PRINCIPAL
-    // ==========================================
-    function App() {
-        const [user, setUser] = useState(null);
-        const [view, setView] = useState('departure');
+            {view === 'dashboard' && <Dashboard user={user} credits={credits} key={tick} />}
+            {view === 'departure' && <RegisterDeparture credits={credits} onVoucherCreated={refresh} />}
+            {view === 'vouchers' && <VoucherList key={tick} />}
+            {view === 'gate' && <DisposalGate />}
+            {view === 'credits' && <Credits credits={credits} onRecharge={refresh} />}
 
-        useEffect(() => {
-            supabase.auth.getSession().then(({ data: { session } }) => setUser(session?.user || null));
-        }, []);
-
-        if (!user) return <LoginView onLogin={setUser} />;
-
-        return (
-            <div style={{ paddingBottom: 80 }}>
-                {view === 'departure' && <RegisterDeparture />}
-                {view === 'vouchers' && <div style={{padding:20}}><h2>Histórico em Breve</h2></div>}
-                
-                <nav className="nav-bottom">
-                    <button className={`nav-item ${view==='departure'?'active':''}`} onClick={()=>setView('departure')}>
-                        <span style={{fontSize:24}}>🚛</span> Saída
+            <nav className="nav-bottom">
+                {navItems.map(item => (
+                    <button key={item.id} className={`nav-item ${view === item.id ? 'active' : ''}`} onClick={() => setView(item.id)}>
+                        <span className="nav-icon">{item.icon}</span>
+                        {item.label}
                     </button>
-                    <button className={`nav-item ${view==='vouchers'?'active':''}`} onClick={()=>setView('vouchers')}>
-                        <span style={{fontSize:24}}>📋</span> Vales
-                    </button>
-                    <button className="nav-item" onClick={()=>supabase.auth.signOut()}>
-                        <span style={{fontSize:24}}>🚪</span> Sair
-                    </button>
-                </nav>
-            </div>
-        );
-    }
+                ))}
+            </nav>
+        </div>
+    );
+}
 
-    const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<App />);
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
 </script>
 </body>
 </html>
